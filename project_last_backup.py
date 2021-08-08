@@ -67,6 +67,7 @@ def matrice_U(f, nlignes, ncolonnes, r, invA, B): #calcule la matrice U (lignes 
     return U
 
 """   ### DÉBUT DU PROGRAMME ###   """
+T0 = f(0)
 invA,B = matrice_AB(r,nlignes+2,ncolonnes+2)
 U = matrice_U(f,nlignes, ncolonnes, r, invA, B)
 
