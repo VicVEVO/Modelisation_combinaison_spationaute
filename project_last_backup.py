@@ -12,7 +12,7 @@ from numpy.linalg import inv
 
 import seaborn as sns; sns.set_theme()
 
-precision = 70 #paramètre temporaire bourrin qu'on utilise pour l'intervalle de mesure
+precision = 15 #paramètre temporaire bourrin qu'on utilise pour l'intervalle de mesure
 
 nlignes , ncolonnes = precision, precision
 
