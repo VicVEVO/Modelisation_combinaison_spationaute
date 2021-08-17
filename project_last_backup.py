@@ -1,7 +1,7 @@
 
 # -*- coding: utf-8 -*-
 """
-/!\ RAPPEL : Ce programme est à exécuter sur Linux
+/!\ RAPPEL : Ce programme est à exécuter sur Linux à cause du module seaborn
 Un programme du TIPE étudiant les transferts thermiques à 1D (sur une barre) avec la méthode de Crank-Nicolson.
 La matrice U représente la température, sa k-ième colonne correspond à la température sur la barre à l'instant k.
                                         sa j-ième ligne correspond à la température au point j de la barre pour tout instant dans l'intervalle défini au début.
