@@ -1,8 +1,10 @@
 
 # -*- coding: utf-8 -*-
 """
-/!\ This program MUST be executed using Linux because if the seaborn module
-This program is a part of an exam which study heat transfer in a single dimension (on a beam) using the Crank-Nicholson method.
+/!\ RAPPEL : Ce programme est à exécuter sur Linux à cause du module seaborn
+Un programme du TIPE étudiant les transferts thermiques à 1D (sur une barre) avec la méthode de Crank-Nicolson.
+La matrice U représente la température, sa k-ième colonne correspond à la température sur la barre à l'instant k.
+                                        sa j-ième ligne correspond à la température au point j de la barre pour tout instant dans l'intervalle défini au début.
 """
 
 import numpy as np
