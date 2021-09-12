@@ -1,1 +1,2 @@
 http://hplgit.github.io/INF5620/doc/pub/H14/diffu/sphinx/._main_diffu001.html
+https://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method
