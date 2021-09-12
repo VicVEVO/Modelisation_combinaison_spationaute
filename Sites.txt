@@ -3,3 +3,5 @@ http://hplgit.github.io/INF5620/doc/pub/H14/diffu/sphinx/._main_diffu001.html
 https://en.wikipedia.org/wiki/Crank%E2%80%93Nicolson_method
 
 https://espace.library.uq.edu.au/data/UQ_239427/Lectures_Book.pdf?Expires=1631436628&Key-Pair-Id=APKAJKNBJ4MJBJNC6NLQ&Signature=K0ksmIg0JdUjaxzDiFqZ9eQBG6cecqkW7NgJ0-yQtOr-TpekDjivWaVPCqMhwlM8mRrWXS~pspdo2qVPDdlFRkziMORj7r2MmscNTIrp9-TNEpPsIxvzp0sMOazWnSfnGAn~7IbRxBQ8mi5qTmz6lLsFd5MkPos8p53XPOVUdqniu046ZFW0Jb7sS-rWOVKUnrNKb61lNaqDC8j1WPPMLUsscAth8kJJPbSKU4tIiOjA0nZqc9jEQv~tP1SaDoxY0L862ioKndO2P~Xr6BbV1PXEkBNN4JT7~VL0q-FMjecu6ZZC3hwozDY-nv9l85qCVkp5tdoWN4t1aGb5O5SgwQ__
+
+https://web.cecs.pdx.edu/~gerry/class/ME448/lecture/pdf/CN_nutshell.pdf
