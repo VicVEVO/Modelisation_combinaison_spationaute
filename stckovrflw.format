@@ -1,0 +1,92 @@
+I have to study the **temperature on a 1 dimension beam** for my studies in Python.
+	
+So I used the Crank Nicholson method (***Github link** at the bottom of the description*) and the results my program returned are totally incoherent although if I did not recognize any error in my program.
+
+	
+So I have a matrix U, representing the temperature: Its k-th column corresponds to the temperature on the beam at time k. Its j-th line corresponds to the temperature on the point j on the beam for any moment.
+	
+**So:** Calculation error in the program or limited Crank-Nicholson method ? (*strange because numerically stable and correct*)
+
+	
+ - **LINK:** *https://github.com/VicVEVO/TIPE-2021*
+
+**EDIT 1 :**
+So we're using the seaborn module to display a color-gradient.
+Here's the code creating both matrix for the Crank Nicholson method, and how we're calculating them :   
+
+(We apologize for the shadows name from outer scope, but we think it is easier to read like this, even though we both know this isn't good)  
+
+```python
+def matrice_AB(r, nline, ncolumn): #both matrix are used for the recursively defined sequence     
+    nline,ncolumn = nline -2, ncolumn-2
+    A = np.zeros((nline,ncolumn))
+    B = np.zeros((nline,ncolumn))
+    
+    for i in range(nline):
+        for j in range(ncolumn):
+            if i == j:
+                A[i][j] = 2 + 2 * r
+                B[i][j] = 2 - 2 * r
+            elif (j == i + 1) or (i == j+1):
+                A[i][j] = -r
+                B[i][j] = r
+    return inv(A), B 
+
+def init(f,nline,ncolumn): #initialisation of the U matrix
+    M = np.zeros((nline,ncolumn))
+    for i in range(nline): #temp on the beam at t = 0s
+        M[i][0] = f(h_x*i)
+    for i in range(ncolumn): #temp is constant at the edges of the beam
+        M[0][i] = T0
+        M[nline-1] = f((nline-1)*h_x)
+    return M
+
+def matrice_U(f, nline, ncolumn, r, invA, B): #Calculating the U matrix (lines(resp. columns) represent the x-axis (resp. t-axis)) using the CN recursive sequence
+    
+    U = init(f,nline+2,ncolumn+2) #initialisation
+    invAxB = np.dot(invA,B) #We're calculating A*B^-1 once, to be quicker when we'll need this in the future
+    
+    for t in range(1,ncolumn+2):
+        
+        b = np.zeros(nline)
+        b[0] = r*U[0,t-1]   #We're calculating the B matrix used in the CN scheme
+        b[nlignes-1] = r*U[nline+1,t-1]
+
+        U[1:nline+1,t] = np.dot(invAxB,U[1:nline+1,t-1]) + np.dot(invA,b) #We're using the CN scheme to evaluate the U matrix
+        
+    return U
+
+"""   ### BEGINNING OF THE RUNNING PROGRAMM ###   """
+T0 = f(0)
+invA,B = matrice_AB(r,nline+2,ncolumn+2)
+U = matrice_U(f,nline, ncolumn, r, invA, B)
+
+if precision <= 10: #Ftm we're displaying the labels only if they're not a lot, otherwise it becomes barely readable, and the time required to display is enormous (precision is the delta-x parameter we're using)
+    ax = sns.heatmap(U,
+                     xticklabels = np.around(np.arange(0, tmax + 2*h_t, h_t),1),
+                     yticklabels = np.around(np.arange(0, xmax + 2*h_x, h_x),1),
+                     cbar_kws={'label': 'Temperature'},
+                     center=0)
+else :
+    ax = sns.heatmap(U,
+                     cbar_kws={'label': 'Temperature'},
+                     center=0) 
+    
+ax.set(title="TEMPERATURE 1D",
+      xlabel="Duration (s)",
+      ylabel="Distance (m)")
+```
+The results we have are the following : 
+[Results using xmax = 10, tmax = 10000 (the initial conditions are a sinusoidal function). As you can see, the temperature evolution is barely visible, which is completely incoherent as the temp on the beam should homogenize instead of remaining constant][1] (the labels are wrong)
+
+[Results using xmax = 10, tmax = 1000000 (the initial conditions are a sinusoidal function)][2] (the labels are wrong too)
+
+
+*If we compare the last and the before last line in the U matrix (temperature), we observe a discontinuity at tmax (at the end of the experiment (*i.e.* the last column), we have a temperature of 37.7 at xmax - 1 (before last line), but we have 74.9 at xmax (last line)*
+
+_The Crank Nicholson scheme we're using is adapted from [this website](http://www.claudiobellei.com/2016/11/01/implicit-parabolic/)_
+
+Thanks for your comments everyone, we tried to update this post as you told us to! Feel free to comment again if you think some things are missing to be helped.
+
+  [1]: https://i.stack.imgur.com/YKHLT.png
+  [2]: https://i.stack.imgur.com/iEGuM.png
