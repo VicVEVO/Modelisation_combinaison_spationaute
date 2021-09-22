@@ -1,2 +1,2 @@
-Le programme a été modifié parce qu'il nous manquait un terme de CI dans la formule de récurrence _(la matrice b en j+1 *(en t dans notre programme)_)
+Le programme a été modifié parce qu'il nous manquait un terme de CI dans la formule de récurrence (la matrice b en j+1 *(en t dans notre programme))
 Maintenant le programme affiche des résulats cohérent avec les conditions initiales, en 1D.
