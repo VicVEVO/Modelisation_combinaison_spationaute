@@ -23,15 +23,16 @@ r = alpha * h_t / (h_x ** 2)  # constante utilisée dans le calcul des matrices 
 
 
 def f(x):  # la fonction définissant U[0], la température sur la barre à t = 0
-    return abs(100 * np.sin(x/2) + 20)
+    return abs(100 * np.sin(x / 2) + 20)
 
 
-def matrice_AB(r, nlignes, ncolonnes):  # calcul des deux matrices constantes A et B pour le calcul de récurrence du modèle
-    #On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
-    nlignes, ncolonnes = nlignes - 2, ncolonnes - 2 #il faut qu'on fixe ça
-    
-    A = np.zeros((nlignes, ncolonnes)) #A et B sont des matrices initialement nulles
-    B = np.zeros((nlignes, ncolonnes)) #que en fonction de nlignes, ncolonnes utilisé à la fin
+def matrice_AB(r, nlignes,
+               ncolonnes):  # calcul des deux matrices constantes A et B pour le calcul de récurrence du modèle
+    # On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
+    nlignes, ncolonnes = nlignes - 2, ncolonnes - 2  # il faut qu'on fixe ça
+
+    A = np.zeros((nlignes, ncolonnes))  # A et B sont des matrices initialement nulles
+    B = np.zeros((nlignes, ncolonnes))  # que en fonction de nlignes, ncolonnes utilisé à la fin
 
     for i in range(nlignes):
         for j in range(ncolonnes):
@@ -41,7 +42,7 @@ def matrice_AB(r, nlignes, ncolonnes):  # calcul des deux matrices constantes A 
             elif (j == i + 1) or (i == j + 1):
                 A[i][j] = -r
                 B[i][j] = r
-    return inv(A), B #
+    return inv(A), B  #
 
 
 def init(f, nlignes, ncolonnes):  # initialisation de la matrice U
@@ -66,8 +67,9 @@ def matrice_U(f, nlignes, ncolonnes, r, invA,
         b[0] = r * U[
             0, t - 1]  # calcul de la matrice colonne b, quasi nulle mais nécessaire dans le calcul par récurrence
         b[nlignes - 1] = r * U[nlignes + 1, t - 1]
-        bjplus1 [nlignes - 1] = r * U[nlignes + 1, t]
-        U[1:nlignes + 1, t] = np.dot(invAxB, U[1:nlignes + 1, t - 1]) + np.dot(invA, b) + np.dot(invA, bjplus1) # application de la formule de récurrence
+        bjplus1[nlignes - 1] = r * U[nlignes + 1, t]
+        U[1:nlignes + 1, t] = np.dot(invAxB, U[1:nlignes + 1, t - 1]) + np.dot(invA, b) + np.dot(invA,
+                                                                                                 bjplus1)  # application de la formule de récurrence
 
     return U
 
@@ -78,14 +80,14 @@ invA, B = matrice_AB(r, nlignes + 2, ncolonnes + 2)
 
 U = matrice_U(f, nlignes, ncolonnes, r, invA, B)
 
-
 plt.xlabel("Durée (s)")
 
 plt.ylabel("Distance (m)")
 plt.title('TEMPERATURE 1D')
 
-plt.imshow(U,extent = [0,tmax,0,xmax], aspect = 'auto',cmap = 'afmhot')
+plt.imshow(U, extent=[0, tmax, 0, xmax], aspect='auto', cmap='afmhot')
+plt.show()
 
 cb = plt.colorbar()
-cb.set_label("Température (°c)") 
-print(U)
+cb.set_label("Température (°c)")
+# print(U)
