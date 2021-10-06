@@ -85,7 +85,7 @@ plt.ylabel("Distance (m)")
 plt.title('TEMPERATURE 1D')
 
 plt.imshow(U,extent = [0,tmax,0,xmax], aspect = 'auto',cmap = 'afmhot')
-
+plt.show()
 cb = plt.colorbar()
 cb.set_label("Température (°c)") 
 print(U)
