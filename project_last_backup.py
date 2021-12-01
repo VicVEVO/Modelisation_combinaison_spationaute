@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
 """
-/!\ RAPPEL : Ce programme est à exécuter sur Linux à cause du module seaborn
-Un programme du TIPE étudiant les transferts thermiques à 1D (sur une barre) avec la méthode de Crank-Nicolson.
-La matrice U représente la température, sa k-ième colonne correspond à la température sur la barre à l'instant k.
-                                        sa j-ième ligne correspond à la température au point j de la barre pour tout instant dans l'intervalle défini au début.
+Created on Thu Sep 23 16:33:37 2021
+
+@author: victo
 """
 
 import numpy as np
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
-import seaborn as sns
 
 precision = 100  # paramètre que l'on définit pour l'intervalle de mesure
 
 nlignes, ncolonnes = precision, precision
 
 xmax, tmax = 10, 300000  # Valeur de mesure spatiale (resp. temporelle) max
-alpha = 10 ** -5  # k/rho*c_p #coefficient de diffusivité
+
+'''
+λ = #la conductivité thermique du matériau
+ρ = #sa masse volumique
+c = #sa capacité thermique massique à pression constante
+'''
+    
+#alpha = λ/(ρ*c) #coefficient de diffusivité
+
+alpha = 10 ** -5 # en m^2/s
 
 h_x, h_t = xmax / nlignes, tmax / ncolonnes  # "correspondent" à dx , dt
 r = alpha * h_t / (h_x ** 2)  # constante utilisée dans le calcul des matrices A et B pour la récurrence
@@ -29,7 +36,7 @@ def f(x):  # la fonction définissant U[0], la température sur la barre à t = 
 def matrice_AB(r, nlignes, ncolonnes):  # calcul des deux matrices constantes A et B pour le calcul de récurrence du modèle
     #On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
     nlignes, ncolonnes = nlignes - 2, ncolonnes - 2 #il faut qu'on fixe ça
-    
+
     A = np.zeros((nlignes, ncolonnes)) #A et B sont des matrices initialement nulles
     B = np.zeros((nlignes, ncolonnes)) #que en fonction de nlignes, ncolonnes utilisé à la fin
 
@@ -41,11 +48,11 @@ def matrice_AB(r, nlignes, ncolonnes):  # calcul des deux matrices constantes A 
             elif (j == i + 1) or (i == j + 1):
                 A[i][j] = -r
                 B[i][j] = r
-    return inv(A), B #
+    return inv(A), B #on renvoie directement l'inverse de A, car on n'utilise que son inverse
 
 
 def init(f, nlignes, ncolonnes):  # initialisation de la matrice U
-    M = np.zeros((nlignes, ncolonnes))
+    M = np.zeros((nlignes, ncolonnes)) #la matrice est initialement nulle
     for i in range(nlignes):  # température sur la barre à t = 0
         M[i][0] = f(h_x * i)
     for i in range(ncolonnes):  # température constante aux bords de la barre
@@ -78,9 +85,7 @@ invA, B = matrice_AB(r, nlignes + 2, ncolonnes + 2)
 
 U = matrice_U(f, nlignes, ncolonnes, r, invA, B)
 
-
 plt.xlabel("Durée (s)")
-
 plt.ylabel("Distance (m)")
 plt.title('TEMPERATURE 1D')
 
@@ -88,4 +93,6 @@ plt.imshow(U,extent = [0,tmax,0,xmax], aspect = 'auto',cmap = 'afmhot')
 
 cb = plt.colorbar()
 cb.set_label("Température (°c)") 
-print(U)
+
+print(U[:,0])
+
