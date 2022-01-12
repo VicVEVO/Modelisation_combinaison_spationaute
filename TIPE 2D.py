@@ -8,6 +8,8 @@ Created on Thu Sep 23 16:33:37 2021
 import numpy as np
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
+import time
+import matplotlib.animation as animation
 
 ########################### D E F I N I T I O N S #######################
 
@@ -126,7 +128,7 @@ c = 2385 #capacité thermique massique du bois de chêne (source: https://www.th
 
 alpha = λ/(ρ*c) #coefficient de diffusivité
 
-r = alpha / (pas_spatial)  # constante utilisée dans le calcul des matrices A et B pour la récurrence
+r = alpha * pas_temporel/ pas_spatial**2 # constante utilisée dans le calcul des matrices A et B pour la récurrence
 
 A, B = matrice_AB(r, taille_mat)
 
@@ -134,20 +136,19 @@ T_ext = 35
 T_int = 7
 
 ########################### D E B U T  D U  P R O G R A M M E #######################
-
+t = time.time()
 U = init(T_int,T_ext, taille_mat)
 
-for i in range(2): #on calcule U pour t = 1s
+for i in range(4): #on calcule U pour t = 1s
     U = calcul_U_t_suivant(U,T_int,taille_mat,E,A,B,λ,N_profondeur,r)
-
 
 plt.xlabel("Durée (s)")
 plt.ylabel("Distance (m)")
 plt.title('TEMPERATURE 1D')
 
-plt.imshow(U,extent = [0,L,0,L], aspect = 'auto',cmap = 'afmhot')
+image = plt.imshow(U,extent = [0,L,0,L], aspect = 'auto',cmap = 'afmhot')
 
 cb = plt.colorbar()
 cb.set_label("Température (°c)") 
-
+print(time.time()-t)
 plt.show()
