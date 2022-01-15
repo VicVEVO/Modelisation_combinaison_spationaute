@@ -1,32 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Created on Thu Sep 23 16:33:37 2021
+Created on Sat Jan 15 11:57:17 2022
 
+@author: victo
+"""
+
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Sep 23 16:33:37 2021
 @author: victo
 """
 
 import numpy as np
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
-
-precision = 100  # paramètre que l'on définit pour l'intervalle de mesure
-
-nlignes, ncolonnes = precision, precision
-
-xmax, tmax = 10, 300000  # Valeur de mesure spatiale (resp. temporelle) max
-
-'''
-λ = #la conductivité thermique du matériau
-ρ = #sa masse volumique
-c = #sa capacité thermique massique à pression constante
-'''
-    
-#alpha = λ/(ρ*c) #coefficient de diffusivité
-
-alpha = 10 ** -5 # en m^2/s
-
-h_x, h_t = xmax / nlignes, tmax / ncolonnes  # "correspondent" à dx , dt
-r = alpha * h_t / (h_x ** 2)  # constante utilisée dans le calcul des matrices A et B pour la récurrence
 
 
 def f(x):  # la fonction définissant U[0], la température sur la barre à t = 0
@@ -65,7 +52,6 @@ def matrice_U(f, nlignes, ncolonnes, r, invA,
 
     U = init(f, nlignes + 2, ncolonnes + 2)  # initialise U
     invAxB = np.dot(invA, B)  # calcule une fois A^-1*B pour éviter des calculs redondants
-
     for t in range(1, ncolonnes + 2):
         b = np.zeros(nlignes)
         bjplus1 = np.zeros(nlignes)
@@ -79,6 +65,26 @@ def matrice_U(f, nlignes, ncolonnes, r, invA,
 
 
 """   ### DÉBUT DU PROGRAMME ###   """
+precision = 100  # paramètre que l'on définit pour l'intervalle de mesure
+
+nlignes, ncolonnes = precision, precision
+
+xmax, tmax = 10, 300000  # Valeur de mesure spatiale (resp. temporelle) max
+
+'''
+λ = #la conductivité thermique du matériau
+ρ = #sa masse volumique
+c = #sa capacité thermique massique à pression constante
+'''
+    
+#alpha = λ/(ρ*c) #coefficient de diffusivité
+
+alpha = 10 ** -5 # en m^2/s
+
+h_x, h_t = xmax / nlignes, tmax / ncolonnes  # "correspondent" à dx , dt
+r = alpha * h_t / (h_x ** 2)  # constante utilisée dans le calcul des matrices A et B pour la récurrence
+
+
 T0 = f(0)
 invA, B = matrice_AB(r, nlignes, ncolonnes)
 
@@ -93,5 +99,4 @@ plt.imshow(U,extent = [0,tmax,0,xmax], aspect = 'auto',cmap = 'afmhot')
 cb = plt.colorbar()
 cb.set_label("Température (°c)") 
 
-print(U[:,0])
-
+print(nlignes,r)
