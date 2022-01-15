@@ -35,7 +35,6 @@ def f(x):  # la fonction définissant U[0], la température sur la barre à t = 
 
 def matrice_AB(r, nlignes, ncolonnes):  # calcul des deux matrices constantes A et B pour le calcul de récurrence du modèle
     #On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
-    nlignes, ncolonnes = nlignes - 2, ncolonnes - 2 #il faut qu'on fixe ça
 
     A = np.zeros((nlignes, ncolonnes)) #A et B sont des matrices initialement nulles
     B = np.zeros((nlignes, ncolonnes)) #que en fonction de nlignes, ncolonnes utilisé à la fin
@@ -81,7 +80,7 @@ def matrice_U(f, nlignes, ncolonnes, r, invA,
 
 """   ### DÉBUT DU PROGRAMME ###   """
 T0 = f(0)
-invA, B = matrice_AB(r, nlignes + 2, ncolonnes + 2)
+invA, B = matrice_AB(r, nlignes, ncolonnes)
 
 U = matrice_U(f, nlignes, ncolonnes, r, invA, B)
 
