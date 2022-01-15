@@ -1,0 +1,96 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Sep 23 16:33:37 2021
+
+@author: victo
+"""
+
+import numpy as np
+from numpy.linalg import inv
+import matplotlib.pyplot as plt
+
+########################### D E F I N I T I O N S #######################
+
+def f(x):  # la fonction définissant U[0], la température sur la barre à t = 0
+    return abs(100 * np.sin(x/2) + 20)
+
+
+def matrice_AB(r, taille_mat):  # calcul des deux matrices carrées A et B pour le calcul de récurrence du modèle
+    #On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
+    A = np.zeros((taille_mat, taille_mat)) #A et B sont des matrices initialement nulles
+    B = np.zeros((taille_mat, taille_mat)) #que en fonction de nlignes, ncolonnes utilisé à la fin
+
+    for i in range(taille_mat):
+        for j in range(taille_mat):
+            if i == j:
+                A[i][j] = 2 + 2 * r
+                B[i][j] = 2 - 2 * r
+            elif (j == i + 1) or (i == j + 1):
+                A[i][j] = -r
+                B[i][j] = r
+    
+    return inv(A),B
+
+
+def init(f, taille_mat):  # initialisation de la matrice U
+
+    M = np.zeros((taille_mat, taille_mat)) #la matrice est initialement nulle
+    
+    for i in range(taille_mat):  
+        M[i][0] = f(pas_spatial * i) # température sur la barre à t = 0
+        M[0][i] = T0 # température constante aux bords de la barre
+        M[-1] = f((taille_mat - 1) * pas_spatial)
+        
+    return M
+
+
+def matrice_U(f, taille_mat, r, invA,B):  # calcule la matrice U (lignes (resp. colonnes) correspondent aux x (resp. t)) par récurrence
+
+    U = init(f, taille_mat + 2)  # initialise U
+    invAxB = np.dot(invA, B)  # calcule une fois A^-1*B pour éviter des calculs redondants
+    
+    for t in range(1, taille_mat + 2):
+        b = np.zeros(taille_mat)
+        b[0] = r * U[ 0, t - 1]  # calcul de la matrice colonne b, quasi nulle mais nécessaire dans le calcul par récurrence
+        b[-1] = 2*r * U[taille_mat + 1, t - 1]
+        U[1:taille_mat + 1, t] = np.dot(invAxB, U[1:taille_mat + 1, t - 1]) + np.dot(invA, b) # application de la formule de récurrence
+
+    return U
+
+########################### D E F I N I T I O N S #######################
+
+xmax, tmax = 10, 30000 # Valeur de mesure spatiale (resp. temporelle) max
+
+pas_spatial = 0.01 # 10cm
+pas_temporel = .5 # 0.5s
+
+L = 20 #longueur de la tige (50m)
+
+taille_mat = int(L/pas_spatial) #correspond au nombre de lignes (= nb colonnes)
+T0 = f(0)
+
+''' ########## POUR UN ORGANE ##########
+ρ = 0.550*10**3/5.4 #masse volumique de l'organe (poumon gauche: 0.550kg/5.4L)
+λ = 0.60 #conductivité thermique de l'eau à 298 K (25 °C)
+c = 4.1855*10**3 #capacité thermique massique de l'eau, on assimile l'organe à de l'eau
+
+'''
+
+ρ = 0.715*10**-3 # masse volumique du Chêne pédonculé (matériau de la boîte)
+λ = .16 #W/m/K conductivité thermique du bois de chêne à 298 K (25 °C)
+c = 2385 #J.kg/K capacité thermique massique du bois de chêne (source: https://www.thermoconcept-sarl.com/base-de-donnees-chaleur-specifique-ou-capacite-thermique/)
+alpha = λ/(ρ*c) #coefficient de diffusivité
+
+r = alpha * pas_temporel/ pas_spatial**2 # constante utilisée dans le calcul des matrices A et B pour la récurrence
+
+invA,B = matrice_AB(r, taille_mat) 
+U = matrice_U(f, taille_mat, r, invA,B)
+
+plt.xlabel("Durée (s)")
+plt.ylabel("Distance (m)")
+plt.title('TEMPERATURE 1D')
+
+plt.imshow(U,extent = [0,tmax,0,xmax], aspect = 'auto',cmap = 'afmhot')
+
+cb = plt.colorbar()
+cb.set_label("Température (°c)") 
