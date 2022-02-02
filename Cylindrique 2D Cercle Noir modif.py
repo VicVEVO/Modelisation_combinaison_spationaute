@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-########################### D E F I N I T I O N S #######################
+########################### D E F I N I T I O N S ###########################
 
 def f(x):  # la fonction définissant U[0], la température sur la barre à t = 0
     return abs(100 * np.sin(x / 2) + 20)
