@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import time
 
 
-########################### D E F I N I T I O N S ###########################
+########################### D E F I N I T I O N S #######################
 
 def f(x):  # la fonction définissant U[0], la température sur la barre à t = 0
     return abs(100 * np.sin(x / 2) + 20)
@@ -19,7 +19,7 @@ def f(x):  # la fonction définissant U[0], la température sur la barre à t = 
 
 def matrice_AB(r, taille_mat):
     """ Calcule les deux matrices carrées A et B nécessaires pour le calcul de récurrence du modèle à partir du schéma.
-     On ne les calcule qu'une fois afin de réduire le temps d'éxecution du programme et de limiter les calculs redondants"""
+     On ne les calcule qu'une fois afin de réduire le temps d'exécution du programme et de limiter les calculs redondants"""
     # On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
     A = np.zeros((taille_mat - 2, taille_mat - 2))  # A et B sont des matrices initialement nulles
     B = np.zeros((taille_mat - 2, taille_mat - 2))  # qu'en fonction de nlignes, ncolonnes utilisé à la fin
@@ -35,48 +35,54 @@ def matrice_AB(r, taille_mat):
     return A, B
 
 
-def init(T_int, T_ext, taille_mat, R, r_ep):
-    """Initialise la matrice U en fonction des conditions aux initiales"""
+def init(T_int, T_ext, taille_mat, R, E):
+    """Initialise la matrice U et crée la matrice ref en fonction des conditions aux initiales"""
     mat_check = np.full((taille_mat, taille_mat), False, dtype=int)
     M = np.full((taille_mat, taille_mat), T_int, dtype=float)  # On impose T_int partout
     M[0], M[-1], M[:, 0], M[:, -1] = (T_ext for _ in range(4))  # puis on impose T_ext à l'extérieur de la boîte, donc aux extrémités de la matrice
     mat_check[0], mat_check[-1], mat_check[:, 0], mat_check[:, -1] = (1 for _ in range(4))
-    centre = taille_mat // 2, taille_mat // 2
+    centre = taille_mat // 2
     for i in range(taille_mat):
         for j in range(taille_mat):
-            if ((i - centre[0]) ** 2 + (j - centre[1]) ** 2) >= R ** 2:
+            rayon = ((i - centre) ** 2 + (j - centre) ** 2) ** (1 / 2)
+            if rayon >= R:
                 M[i, j] = T_ext
-                mat_check[i, j] = 1
-            elif ((i - centre[0]) ** 2 + (j - centre[1]) ** 2) >= r_ep ** 2:
-                mat_check[i, j] = -1
+                mat_check[i, j] = 1  # Extérieur
+            elif rayon >= R - E:
+                mat_check[i, j] = -1  # Là où on doit calculer
     return M, mat_check
 
 
 def c_indices_xy(y, ref, x_or_y):  # x_or_y vaut True si on calcule les lignes et False si on calcule les colonnes
     """Cette fonction renvoie une liste de couples qui sont les valeurs limites de la paroi du système pour chaque ligne"""
-    if x_or_y:
+    if x_or_y:  # On calcule y
         ind_vrac = np.where(ref[y] == -1)[0]
         c_indices = []
         couple_temp = []
+
         for j in range(len(ind_vrac)):
-            if not couple_temp:
+            if couple_temp == []:
                 couple_temp.append(ind_vrac[j])
             if j != len(ind_vrac) - 1 and ind_vrac[j + 1] != ind_vrac[j] + 1:
                 couple_temp.append(ind_vrac[j])
                 c_indices.append(couple_temp)
+                couple_temp = []
             elif j == len(ind_vrac) - 1:
                 couple_temp.append(ind_vrac[j])
                 c_indices.append(couple_temp)
         return c_indices
+    # On calcule x
     ind_vrac = np.where(ref[:, y] == -1)[0]
     c_indices = []
     couple_temp = []
+
     for j in range(len(ind_vrac)):
-        if not couple_temp:
+        if couple_temp == []:
             couple_temp.append(ind_vrac[j])
         if j != len(ind_vrac) - 1 and ind_vrac[j + 1] != ind_vrac[j] + 1:
             couple_temp.append(ind_vrac[j])
             c_indices.append(couple_temp)
+            couple_temp = []
         elif j == len(ind_vrac) - 1:
             couple_temp.append(ind_vrac[j])
             c_indices.append(couple_temp)
@@ -85,38 +91,46 @@ def c_indices_xy(y, ref, x_or_y):  # x_or_y vaut True si on calcule les lignes e
 
 def calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ, profondeur, r, ref):
     """Calcule la matrice Température U au temps suivant en fonction des cas limites, des conditions initiales et de l'épaisseur de la boîte"""
-    delta_T = 0
 
     for y in range(1, taille_mat - 1):  # Calcul pour t variant de t à t+1/2 : On étudie les lignes
         c_indices = c_indices_xy(y, ref, True)
         for c_ind in c_indices:
-            i, j = c_ind[0], c_ind[1]
+            i, j = c_ind
+            if i != 1:
+                i -= 1
+            if j != taille_mat - 1:
+                j += 1
             l_barre = j - i + 1
             invA = inv(A[: l_barre - 2, : l_barre - 2])
             invAxB = np.dot(invA, B[: l_barre - 2, : l_barre - 2])
-            U[y, i: j + 1] = calc_U(U[y, i:j + 1], invA, invAxB, r)
-            E = j - i
 
+            U[y, i:j + 1] = calc_U(U[y, i:j + 1], invA, invAxB, r)
+
+            """
             for y_bord in range(E, taille_mat - E + 1):  # pareil pour les bords intérieurs verticaux
                 delta_T += -λ * (U[y_bord, E] - U[y, E - 1]) * E * 100  # on étudie le bord intérieur gauche
                 delta_T += -λ * (U[y_bord, taille_mat - E] - U[y_bord, taille_mat - E + 1]) * E * 100  # on étudie le bord intérieur gauche
+            """
 
     for x in range(1, taille_mat - 1):  # Calcul pour t variant de t+1/2 à t+1 : On étudie les colonnes
         c_indices = c_indices_xy(x, ref, False)
         for c_ind in c_indices:
-            i, j = c_ind[0], c_ind[1]
+            i, j = c_ind
+            if i != 1:
+                i -= 1
+            if j != taille_mat - 1:
+                j += 1
             l_barre = j - i + 1
             invA = inv(A[:l_barre - 2, : l_barre - 2])
             invAxB = np.dot(invA, B[: l_barre - 2, : l_barre - 2])
-            U[x, i: j + 1] = calc_U(U[i: j + 1, x], invA, invAxB, r)
-            E = j - i
+            U[i:j + 1, x] = calc_U(U[i:j + 1, x], invA, invAxB, r)
 
-            for x_bord in range(E, taille_mat - E + 1):  # on calcule delta T sur les bords intérieurs horizontaux
+            """for x_bord in range(E, taille_mat - E + 1):  # on calcule delta T sur les bords intérieurs horizontaux
                 delta_T += -λ * (U[E, x_bord] - U[E - 1, x_bord]) * E * 100  # on étudie le bord intérieur haut
                 delta_T += -λ * (U[taille_mat - E, x_bord] - U[taille_mat - E + 1, x_bord]) * E * 100  # le bord intérieur bas
-
+            
     T_int += delta_T
-
+    """
 
 def l(a, b, c, d):
     """Fonction qui ne sert à rien à part lorsque le code bug et que l'on souhaite savoir pourquoi lol"""
@@ -142,13 +156,13 @@ def calc_U(barre, invA, invAxB, r):  # T0 (resp.T1): température extérieure ga
 pas_spatial = 10 ** -3  # (en m)
 pas_temporel = 100  # (en s)
 
-L = 0.5  # longueur de la boîte (en m)
-temps_de_sim = 300  # Temps de la simulation (en s)
-epaisseur = 0.02  # son épaisseur (en m)
+rayon_boite = 0.10  # rayon du cercle (en m)
+temps_de_sim = 900  # Temps de la simulation (en s)
+epaisseur_cercle = 0.04  # son épaisseur (en m)
 
-E = int(epaisseur / pas_spatial)  # conversion de l'épaisseur en nombre de points sur la matrice
-taille_mat = 2 * int((L / pas_spatial) / 2) + 1  # correspond au nombre de lignes (= nb colonnes)
-
+E = int(epaisseur_cercle / pas_spatial)  # conversion de l'épaisseur en nombre de points sur la matrice
+R = int(rayon_boite / pas_spatial)
+taille_mat = int(2 * R + 1)  # correspond au nombre de lignes (= nb colonnes)
 N_profondeur = E * 100  # nombre de mesures de la profondeur de la boîte pour négliger les effets de bords
 
 ''' ########## POUR UN ORGANE ##########
@@ -174,29 +188,42 @@ T_int = 7
 # Plot de l'épaisseur
 
 theta = np.linspace(0, 2 * np.pi, 100)  # Périmètre d'un cercle de rayon 1 = 2*Pi
-rayon_cercle_epaisseur = L / 2 - epaisseur
-x1 = rayon_cercle_epaisseur * (np.cos(theta)) + L / 2  #
-x2 = rayon_cercle_epaisseur * (np.sin(theta)) + L / 2
-plt.plot(x1, x2, color='#006a4e')
+
+x_fin_de_combi = (rayon_boite - epaisseur_cercle) * (np.cos(theta)) + rayon_boite
+x2_fin_de_combi = (rayon_boite - epaisseur_cercle) * (np.sin(theta)) + rayon_boite
+plt.plot(x_fin_de_combi, x2_fin_de_combi, color='#006a4e')
+
+x_début_de_combi = rayon_boite * (np.cos(theta)) + rayon_boite
+x2_début_de_combi = rayon_boite * (np.sin(theta)) + rayon_boite
+plt.plot(x_début_de_combi, x2_début_de_combi, color='#003a4e')
 
 t = time.time()
-rayon_mat = taille_mat // 2 - 10
-U, ref = init(T_int, T_ext, taille_mat, rayon_mat, rayon_cercle_epaisseur)
+
+U, ref = init(T_int, T_ext, taille_mat, R, E)
+
+plt.imshow(ref)
+plt.show()
 
 nb_diterations = int(temps_de_sim / pas_temporel)  # (en s)
 
+plt.imshow(ref)
+
+
 for i in range(nb_diterations):  # on calcule U avec n itérations
     calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ, N_profondeur, r, ref)
-    print(i)  # Pour savoir où on en est
+    print("Please wait, Graph is loading...")  # Pour savoir où on en est
+    print("▓" * int(29 * ((i + 1) / nb_diterations)) + "░" * (29 - int(29 * ((i + 1) / nb_diterations))))
+    print(" " * 13 + str(int(100 * (i + 1) / nb_diterations)) + "%" + "" * 13, '\n\n')
+
 
 plt.xlabel("Distance (en m)")
 plt.ylabel("Distance (en m)")
 plt.title('TEMPERATURE 2D')
 
-image = plt.imshow(U, extent=[0, L, 0, L], cmap='afmhot', aspect='auto', animated=True)
+image = plt.imshow(U, extent=[0, 2 * rayon_boite, 0, 2 * rayon_boite], cmap='afmhot', aspect='auto', animated=True)
 
 cb = plt.colorbar()
 cb.set_label("Température (en °C)")
 
-print(time.time() - t)
+print("Temps d'exécution = {} secondes".format(int(time.time() - t)))
 plt.show()
