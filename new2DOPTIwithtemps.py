@@ -34,6 +34,29 @@ def matrice_AB(r, taille_mat):  # calcul des deux matrices carrées A et B pour 
     return A, B
 
 
+def inverse_tridiag(M, D):  # Procédure qui inverse une matrice tridiag M, D étant le vecteur à droite du système MX = D
+    n = len(M)
+    diag_du_bas = np.zeros(n - 1)
+    diag_du_haut = np.zeros(n - 1)
+    diag_du_mid = np.zeros(n)
+    diag_du_mid[0] = M[0, 0]
+    solution = np.empty(n)
+    for i in range(1, n):  # On définit les diagonales de la matrice tridiag
+        diag_du_bas[i - 1] = M[i, i - 1]
+        diag_du_mid[i] = M[i, i]
+        diag_du_haut[i - 1] = M[i - 1, i]
+    diag_du_haut[0] = diag_du_haut[0] / diag_du_mid[0]
+    D[0] = D[0] / diag_du_mid[0]
+    for j in range(1, n - 1):  # Relation de réccurence de l'algorithme de Thomas
+        diag_du_haut[j] = diag_du_haut[j] / (diag_du_mid[j] - diag_du_bas[j - 1] * diag_du_haut[j - 1])
+        D[j] = (D[j] - diag_du_bas[j - 1] * D[j - 1]) / (diag_du_mid[j] - diag_du_bas[j - 1] * diag_du_haut[j - 1])
+    D[n - 1] = (D[n - 1] - diag_du_bas[n - 2] * D[n - 2]) / (diag_du_mid[n - 1] - diag_du_bas[n - 2] * diag_du_haut[n-2])
+    solution[n - 1] = D[n - 1]
+    for k in range(n - 2, -1, -1):  # Substitution inverse pour trouver le vecteur solution
+        solution[k] = D[k] - diag_du_haut[k] * solution[k + 1]
+    return solution
+
+
 def init(T_int, T_ext, taille_mat):  # initialisation de la matrice U
 
     M = np.full((taille_mat, taille_mat), T_int, dtype=float)  # On impose T_int partout
@@ -58,7 +81,7 @@ def calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ_int, profondeur, r):  #
             flux_tot += profondeur * pas_spatial * λ_int * (U[y, taille_mat - E + 1] - T_int)  # Flux à droite
             flux_tot += profondeur * pas_spatial * λ_int * (U[y, E - 1] - T_int)  # Flux à gauche
 
-        else:
+        else:  # cas où on est dans l'isolant
             invA = inv(A)
             invAxB = np.dot(invA, B)
 
@@ -83,7 +106,7 @@ def calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ_int, profondeur, r):  #
             U[:, x] = calc_U(U[:, x], invA, invAxB, r)
 
     T_int += pas_temporel * flux_tot / C_int
-    U[E:taille_mat - E, E:taille_mat - E] = T_int
+    U[E - 1:taille_mat - E + 1, E - 1:taille_mat - E + 1] = T_int
     return T_int
 
 
@@ -106,8 +129,8 @@ def calc_U(barre, invA, invAxB, r):  # T0 (resp.T1): température extérieure ga
 
 ########################### A F F E C T A T I O N S #######################
 
-pas_spatial = 1/2 * 10 ** -3  # (en m)
-pas_temporel = 100  # (en s)
+pas_spatial = 1 * 10 ** -3  # (en m)
+pas_temporel = 10  # (en s)
 
 L = 0.5/5  # longueur de la boîte (en m)
 temps_de_sim = 3000  # Temps de la simulation (en s)
@@ -149,11 +172,12 @@ U = init(T_int, T_ext, taille_mat)
 nb_diterations = int(temps_de_sim / pas_temporel)  # (en s)
 
 for i in range(nb_diterations):  # on calcule U avec n itérations
+    t_boucle = time.time()
     T_int = calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ, N_profondeur, r)
     print("Please wait, Graph is loading...")  # Pour savoir où on en est
     print("▓" * int(29 * ((i + 1) / nb_diterations)) + "░" * (29 - int(29 * ((i + 1) / nb_diterations))))
     print(" " * 13 + str(int(100 * (i + 1) / nb_diterations)) + "%" + "" * 13, '\n\n')
-
+    print("Temps restant estimé : {}s".format(int((time.time() - t_boucle) * (nb_diterations - i))))
 
 plt.xlabel("Distance (en m)")
 plt.ylabel("Distance (en m)")
