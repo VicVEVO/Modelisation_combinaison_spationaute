@@ -6,7 +6,7 @@ Created on Thu Sep 23 16:33:37 2021
 """
 
 import numpy as np
-from numpy.linalg import inv
+# from numpy.linalg import inv
 import matplotlib.pyplot as plt
 import time
 
@@ -245,9 +245,3 @@ cb.set_label("Température (en °C)")
 print("Temps d'exécution = {} secondes".format(int(time.time() - t)))
 plt.show()
 
-"""def huitre:
-    for il in range(ref[1:-1]):
-        for ic in range(ref[0, 1:-1]):
-            for i in range(-1, 2, -1):
-                if ref[il - i, ic] == ext or ref[il, ic - i] == ext:
-                    store(ic, il)"""
