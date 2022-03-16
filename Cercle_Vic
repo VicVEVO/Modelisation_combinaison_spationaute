@@ -14,7 +14,7 @@ import time
 ########################### D E F I N I T I O N S #######################
 
 def f(i,j): #fonction simulant la température extérieure
-    return abs(100 * np.sin((i+j) / 200) + 20)
+    return abs(10 * np.sin((i+j) / 20) + 20)
 
 
 def matrice_AB(r, taille_mat):  # calcul des deux matrices carrées A et B pour le calcul de récurrence du modèle
@@ -48,6 +48,7 @@ def init(mat_ref, T_int, T_ext, taille_mat):  # initialisation de la matrice U
 def calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ, profondeur, r):  # calcule la matrice de la température U au temps suivant
 
     for y in range(1, taille_mat - 1):  # balayage de t à t+1/2: on étudie les lignes
+        
         c_indices = c_indices_y(y,mat_ref)
         if c_indices != None:
             for c_ind in c_indices:
@@ -61,7 +62,11 @@ def calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ, profondeur, r):  # cal
                 invAxB = np.dot(invA,B[:l_barre-2,:l_barre-2])
     
                 U[y,i:j+1] = calc_U(U[y,i:j+1],invA,invAxB,r) #on y calcule la nouvelle température
-                
+        
+        
+        
+        
+            
     for x in range(1, taille_mat - 1):  # balayage de t+1/2 à t+1: on étudie les colonnes
         c_indices = c_indices_x(x,mat_ref)
         if c_indices != None:
@@ -76,22 +81,22 @@ def calcul_U_t_suivant(U, T_int, taille_mat, E, A, B, λ, profondeur, r):  # cal
                 invAxB = np.dot(invA,B[:l_barre-2,:l_barre-2])
                 
                 U[i:j+1,x] = calc_U(U[i:j+1,x],invA,invAxB,r) #on y calcule la nouvelle température
-    '''
-    delta_T = 0  # CALCUL DU NV T_int
-
-    for x in range(E, taille_mat - E + 1):  # on calcule delta T sur les bords intérieurs horizontaux
-
-        delta_T += -λ * (U[E, x] - U[E - 1, x]) * profondeur  # on étudie le bord intérieur haut
-        delta_T += -λ * (U[taille_mat - E, x] - U[taille_mat - E + 1, x]) * profondeur  # le bord intérieur bas
-
-    for y in range(E, taille_mat - E + 1):  # pareil pour les bords intérieurs verticaux
-
-        delta_T += -λ * (U[y, E] - U[y, E - 1]) * profondeur  # on étudie le bord intérieur gauche
-        delta_T += -λ * (U[y, taille_mat - E] - U[y, taille_mat - E + 1]) * profondeur  # on étudie le bord intérieur gauche
-
-    T_int += delta_T
-    '''
-
+    flux_th = 0
+    for y in range(1, taille_mat - 1):
+        voisins = voisinage(c_indices_y(y,mat_ref))
+        for x in voisins:
+            vois_ent = voisins_entourants_connus(x,y)
+            for (i,j) in vois_ent:
+                flux_th += flux((i,j),(x,y))
+            flux_th /= len(vois_ent)
+            
+    T_int += pas_temporel*flux_th/C_int
+    
+    for i in range(taille_mat):
+        for j in range(taille_mat):
+            if mat_ref[i,j] == 0: #si on est à l'intérieur
+                U[i,j] = T_int
+                
 def calc_U(barre, invA, invAxB, r):  # T0 (resp.T1): température extérieure gauche (resp. droite)
     longueur = len(barre[1:-1])  # longueur de la barre où l'on change la température
 
@@ -118,6 +123,35 @@ def ref(x,y,R): #x,y: taille matrice
                 else:
                     mat_ref[i,j] = 0 #intérieur
     return mat_ref
+
+def voisinage(A): #renvoie les indices aux bordures de l'intérieur pour y calculer les flux
+    vois = []
+    
+    if A!= None:
+        for i in range(len(A)):
+            if i%2 == 0:
+                vois.append(A[i][1])
+            else:
+                vois.append(A[i][0])
+        return vois
+    return []
+            
+def voisins_entourants_connus(x,y):
+    vois = []
+    for i in [-1,0,1]:
+        for j in [-1,0,1]:
+            if mat_ref[x+i,y+j] == -1 and (i,j) != (0,0):
+                vois.append((x+i,y+j))
+    return vois
+
+def flux(I_J,X_Y):
+    i,j = I_J[0],I_J[1]
+    x,y = X_Y[0],X_Y[1]
+    if i != x and j != y:
+        poids = np.sqrt(2)/2
+    else:
+        poids = 1
+    return poids*pas_spatial*N_profondeur*λ_int*(U[i,j]-T_int)
 
 
 def c_indices_y(y,mat_ref): #renvoie les couples d'indices des extrémités des barres intermédiaires pour y donné
@@ -172,9 +206,14 @@ taille_mat = int(2*(rayon / pas_spatial + 1))  # correspond au nombre de lignes 
 
 N_profondeur = E * 100  # nombres de mesures de la profondeur de la boîte pour négliger les effets de bords
 
-ρ = 715   # masse volumique du Chêne pédonculé (matériau de la boîte) en kg/L
-λ = 0.16  # W/m/K conductivité thermique du bois de chêne à 298 K (25 °C)
+ρ = 715   # masse volumique du Chêne pédonculé en kg/L
 c = 2385  # J.kg/K capacité thermique massique du bois de chêne (source: https://www.thermoconcept-sarl.com/base-de-donnees-chaleur-specifique-ou-capacite-thermique/)
+λ = 0.16 # conductivité thermique du bois de chêne à 298 K (W/m/K)
+
+rho_int = 1004 # masse volumique de l'air (kg/L)
+λ_int = 0.025 # conductivité thermique de l'air(W/m/K)
+c_int = 1005 # capacité thermique massique de l'air (J/kg/K)
+C_int = c_int*rho_int*np.pi*(rayon-epaisseur_cercle)**5*100*epaisseur_cercle # Capacité thermique à l'intérieur
 
 alpha = λ / (ρ * c) # coefficient de diffusivité
 
