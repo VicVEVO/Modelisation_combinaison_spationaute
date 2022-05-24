@@ -1,0 +1,35 @@
+Vic :
+- pas assez concret 
+
+- mettre l'usage au début et pas à la fin
+
+- Une partie résolution puis résultats = étrange car on comprend pas pourquoi on passe d'un modèle à l'autre
+
+- Problématique = trop de mots : n'en mettre aucun mais un combi.png à la place
+
+- Page 6 = chargée +++++ et dessin en 3D, 2D mais qu'une seule variable qui est x sur l'équation
+	o privilégier un schéma à 1D puis résolution 1D puis transition 2D (une fois qu'on a bien compris)
+
+ 	o Le schéma entre x et dx sert à rien car le physicien sait la démo mais ceux qui ne savent pas ne comprennent pas mieux avec 
+	  (faire un diapo à la fin pour préshot l'éventuelle question)
+
+	o Expliquer les grandes lignes et balancer l'équation en 3D puis expliquer qu'on se restreint à 1D avant d'upgrade
+
+	o Laisser Loi de Fourier, dire que c'est un vecteur qui traduit les déplacements d'énergie et qu'il va de l'important vers le faible
+
+- Page 7 variables s'appelent u, autant les appeler T et wtf aucune transition entre 1D et 2D et 3D = très dur à suivre car juste après tu repasses en 1D donc c'est espace et temps
+
+- Discrétisation en espace = maillage
+
+- Tu parles pas des CL = essentiel et permet d'expliquer l'étude
+
+- Page  10 : Méthode d'Euler avec x c'est bof car x est un vecteur, n est une var alors qu'avant c'est taille_mat + Euler d'une seule variable alors que nous c'est de plusieurs
+	
+	o C'est pas Euler c'est MDF
+
+- Rappeler où est le temps et où est l'espace
+
+- Diapo avec accolade : Pourquoi 1/2 et pas 1/3 etc + associer à un schéma sur la même diapo
+
+-Tu n'as pratiquement rien dit sur convection : tu en fais quoi de ces équations?
+
