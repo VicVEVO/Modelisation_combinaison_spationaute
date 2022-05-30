@@ -1,0 +1,113 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Sep 23 16:33:37 2021
+
+@author: victo
+"""
+
+import numpy as np
+from numpy.linalg import inv
+import matplotlib.pyplot as plt
+from variables import *
+
+########################### D E F I N I T I O N S #######################
+
+def f(x):  # La fonction définissant U[0], la température initiale sur la barre
+    return abs(100 * np.sin(x/2) + 20)
+
+
+
+def matrices_AB(r, taille_mat):
+    
+    A = np.zeros((taille_mat, taille_mat)) # Initialisation
+    B = np.zeros((taille_mat, taille_mat))
+
+    for i in range(taille_mat):
+        for j in range(taille_mat):
+            if i == j: # Dans la diagonale
+                A[i][j] = 2 + 2 * r
+                B[i][j] = 2 - 2 * r
+            elif (j == i + 1) or (i == j + 1): # À côté de la diagonale
+                A[i][j] = -r
+                B[i][j] = r
+                
+    return inv(A),B
+
+
+
+def init(f, taille_mat):
+    '''
+        Initialisation de la matrice de température T en 1D
+        
+            |.  .  .| ← x=0
+        T = |.  .  .|
+            |.  .  .| ← x=L
+            ↑      ↑
+           t=0   t=tmax
+
+    '''
+    T = np.zeros((taille_mat, taille_mat))
+    
+    for i in range(taille_mat):
+        T[i][0] = f(pas_spatial * i) # Température sur la barre à t = 0
+        T[0][i] = f(0) # On impose T_int à x = 0
+    T[-1] = f((taille_mat - 1) * pas_spatial) # On impose T_int à x = L par continuité
+    print(T)
+    return T
+
+
+def calc_matrice_T_crankN(f, taille_mat, r):
+
+    T = init(f, taille_mat + 2)  # Initialisation
+    
+    invA,B = matrices_AB(r, taille_mat)
+    invAxB = np.dot(invA, B)
+    
+    for t in range(1, taille_mat + 2): # Récurrence
+    
+        b = np.zeros(taille_mat)
+        b[0] = r * T[ 0, t - 1]  # Calcul de la matrice colonne b
+        b[-1] = 2*r * T[taille_mat + 1, t - 1]
+        
+        T[1:taille_mat + 1, t] = np.dot(invAxB, T[1:taille_mat + 1, t - 1])\
+            + np.dot(invA, b)
+
+
+    return T
+
+def calc_matrice_T_euler(f,taille_mat, r, nb_iterations):
+    
+    tempt0 = np.ones(taille_mat) # température initiale sur la tige
+    for _ in range(taille_mat):
+        tempt0[_] = f(_)
+        
+    T = np.zeros((taille_mat, nb_iterations))
+    T[0] = f(0)
+    T[-1] = f((taille_mat - 1) * pas_spatial)
+    T[:, 0] = tempt0
+
+    for temps in range(1, nb_iterations):
+        T[1:taille_mat-1, temps] = r*T[2:taille_mat, temps - 1] + (1-2*r)*T[1:taille_mat-1, temps - 1]\
+                                           + r * T[0:taille_mat-2, temps - 1]
+    return T
+
+
+def affichage(T,tmax,xmax):
+    plt.xlabel("Durée (s)")
+    plt.ylabel("Distance (m)")
+    plt.title('TEMPERATURE en 1D')
+    
+    plt.imshow(T,extent = [0,tmax,0,xmax], aspect = 'auto',cmap = 'afmhot')
+    
+    cb = plt.colorbar()
+    cb.set_label("Température (°C)") 
+    
+    plt.show()
+
+########################### D E B U T  D U  P R O G R A M M E #######################
+
+
+T = calc_matrice_T_crankN(f, taille_mat, r)
+#T = calc_matrice_T_euler(f, taille_mat, r, nb_iterations)
+
+affichage(T,temps_de_sim,longueur_boite)
