@@ -2,45 +2,77 @@ import numpy as np
 
 
 def matrice_AB(r, taille_mat):
-    """ Calcule les deux matrices carrées A et B nécessaires pour le calcul de récurrence du modèle à partir du schéma.
-     On ne les calcule qu'une fois afin de réduire le temps d'exécution du programme et de limiter les calculs redondants"""
-    # On ne les calcule qu'une fois pour réduire considérablement les calculs répétitifs inutiles
-    A = np.zeros((taille_mat - 2, taille_mat - 2))  # A et B sont des matrices initialement nulles
-    B = np.zeros((taille_mat - 2, taille_mat - 2))  # qu'en fonction de nlignes, ncolonnes utilisé à la fin
-    # il faut fix le -2
+    '''
+        Calcul des deux matrices carrées A et B pour le calcul de récurrence.
+        On ne les calcule qu'une fois pour éviter la redondance de code.
+
+        Paramètres
+        ----------
+        r : flottant.
+        taille_mat : entier.
+            Correspond au nombre de lignes/colonnes de la matrice
+
+        Retours
+        -------
+        A : tableau numpy
+        B : tableau numpy
+    '''
+
+    A = np.zeros((taille_mat - 2, taille_mat - 2))
+    B = np.zeros((taille_mat - 2, taille_mat - 2))
+
     for i in range(taille_mat - 2):
         for j in range(taille_mat - 2):
-            if i == j:
+            if i == j:  # Étude de la diagonale centrale
                 A[i][j] = 2 + 2 * r
                 B[i][j] = 2 - 2 * r
-            elif (j == i + 1) or (i == j + 1):
+            elif (j == i + 1) or (i == j + 1):  # Diagonales secondaires
                 A[i][j] = -r
                 B[i][j] = r
     return A, B
 
 
-########   C A R A C T E R I S T I Q U E S  T H E R M I Q U E S  D E S  S Y S T E M E S   ########
+def choix_materiau(nom_materiau):
+    if nom_materiau == 'bois':
+        return 715, .16, 2385  # masse volumique, conductivité thermique et capacité thermique massique du Chêne pédonculé
+    elif nom_materiau == 'kevlar':
+        return 1440, 0.04, 1420
+    elif nom_materiau == 'aluminium':
+        return 2699, 237, 897
+    elif nom_materiau == 'BOPET':  # Marque connue : Mylar
+        return 1350, 0.13, 1500
+    elif nom_materiau == 'nylon':
+        return 1240, 0.25, 1500
+    else:
+        return None, None, None
 
-ρ = 715  # masse volumique du Chêne pédonculé (matériau de la boîte) en kg/L
-λ = 0.16  # W/m/K conductivité thermique du bois de chêne à 298 K (25 °C)
-c = 2385  # J.kg/K capacité thermique massique du bois de chêne (source: https://www.thermoconcept-sarl.com/base-de-donnees-chaleur-specifique-ou-capacite-thermique/)
-ρ_int, λ_int, c_int = 1, 1, 1  # mass vol, cond. th. et cap. th du système à l'intérieur de la boite
-M_int = ρ_int * ()  # Masse du système interne
-alpha = λ / (ρ * c)  # coefficient de diffusivité
-T_ext = 35  # Température à l'extérieur du système externe
-T_int = 7  # Température initiale à l'intérieur du système interne
+#######   C A R A C T E R I S T I Q U E S  D U  S Y S T E M E (U.S.I)  #######
 
-#########   M E S U R E S   #########
+longueur_boite = 2 * 10 ** -1  # longueur de la boîte (en m)
+epaisseur = 5 * 10 ** -2  # son épaisseur (en m)
+profondeur_boite = 100 * epaisseur  # On suppose que la boite est très épaisse pour négliger les effets de bords
 
-pas_spatial = 1 * 10 ** -3  # (en m)
-pas_temporel = 10  # (en s)
-temps_de_sim = 3000  # Temps de la simulation (en s)
-nb_diterations = int(temps_de_sim / pas_temporel)
-r = alpha * pas_temporel / pas_spatial ** 2  # constante utilisée dans le calcul des matrices A et B pour la récurrence
-rayon_boite = 0.10  # rayon du système externe (en m)
-epaisseur_isolant = 0.04  # distance entre le système externe et le système interne (en m)
-E = int(epaisseur_isolant / pas_spatial)  # conversion de l'épaisseur en nombre de points sur la matrice
-R = int(rayon_boite / pas_spatial)  # conversion du rayon de la boite en nb de points sur la matrice
-taille_mat = int(2 * R + 1)  # correspond au nombre de lignes (= nb colonnes)
-N_profondeur = E * 100  # nombre de mesures de la profondeur de la boîte pour négliger les effets de bords
+T_ext = -160
+T_int = 36.5
+T_int_init = T_int
+
+pas_spatial = 1 * 10 ** -3  # (en m) (c'est O(n²) en spat)
+pas_temporel = 12  # (en s) (c'est O(n) en temp)
+
+temps_de_sim = 5400  # Temps de la simulation (en s)
+
+
+E = int(epaisseur / pas_spatial)  # conversion de l'épaisseur en nombre de points sur la matrice
+taille_mat = int(longueur_boite / pas_spatial)  # correspond au nombre de lignes (= nb colonnes)
+
+nb_iterations = int(temps_de_sim / pas_temporel)
+
+liste_materiau = ['bois', 'kevlar', 'BOPET', 'nylon']
+materiau = liste_materiau[1]
+ρ, λ, c = choix_materiau(materiau)
+
+ρ_int, λ_int, c_int = 1.004, 0.025, 1005  # air
+
+a = λ / (ρ * c)  # Coefficient de diffusivité (dans l'équation de la chaleur)
+r = a * pas_temporel / pas_spatial ** 2  # constante utilisée dans A et B
 A, B = matrice_AB(r, taille_mat)
